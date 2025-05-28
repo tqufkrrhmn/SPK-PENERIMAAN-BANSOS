@@ -369,7 +369,7 @@ def nilai():
         nilai_dict[n['id_alternatif']][n['id_kriteria']] = n['nilai']
     
     return render_template('nilai.html', 
-                         alternatif=alternatif_data, 
+                         alternatif_list=alternatif_data, 
                          kriteria=kriteria_data,
                          nilai=nilai_dict)
 
