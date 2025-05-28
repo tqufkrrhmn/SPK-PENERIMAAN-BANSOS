@@ -54,13 +54,19 @@ def hitung_saw():
     # Normalisasi matriks
     max_min = {}
     for k in kriteria:
-        values = [matriks_keputusan[alt]['nilai'][k['id_kriteria']] for alt in matriks_keputusan]
-        if k['atribut'] == 'benefit':
-            max_min[k['id_kriteria']] = max(values)
+        values = [matriks_keputusan[alt]['nilai'][k['id_kriteria']] for alt in matriks_keputusan if k['id_kriteria'] in matriks_keputusan[alt]['nilai']]
+        if values:
+            if k['atribut'] == 'benefit':
+                max_min[k['id_kriteria']] = max(values)
+            else:
+                max_min[k['id_kriteria']] = min(values)
         else:
-            max_min[k['id_kriteria']] = min(values)
-    
+            # Handle kasus jika tidak ada nilai untuk kriteria ini
+            max_min[k['id_kriteria']] = 1.0 if k['atribut'] == 'benefit' else 1.0 # Nilai default jika tidak ada data
+
     matriks_normalisasi = {}
+    hasil_saw = []
+
     for alt_id, alt_data in matriks_keputusan.items():
         matriks_normalisasi[alt_id] = {
             'nama': alt_data['nama'],
@@ -69,17 +75,27 @@ def hitung_saw():
             'nilai': {},
             'total': 0
         }
+        total_nilai_tertimbang = 0
         for k in kriteria:
-            if k['atribut'] == 'benefit':
-                nilai_normalisasi = alt_data['nilai'][k['id_kriteria']] / max_min[k['id_kriteria']]
-            else:
-                nilai_normalisasi = max_min[k['id_kriteria']] / alt_data['nilai'][k['id_kriteria']]
+            nilai_ternormalisasi = 0
+            if k['id_kriteria'] in alt_data['nilai']:
+                nilai_mentah = alt_data['nilai'][k['id_kriteria']]
+                if max_min[k['id_kriteria']] != 0 and max_min[k['id_kriteria']] != float('inf') and max_min[k['id_kriteria']] != -float('inf'): # Tambahkan pengecekan infiniti
+                    if k['atribut'] == 'benefit':
+                        nilai_ternormalisasi = nilai_mentah / max_min[k['id_kriteria']] if max_min[k['id_kriteria']] != 0 else 0
+                    else:
+                        nilai_ternormalisasi = max_min[k['id_kriteria']] / nilai_mentah if nilai_mentah != 0 else 0
+                # else: # Handle kasus jika max_min adalah 0 atau infiniti
+                #     nilai_ternormalisasi = 0 # Atau nilai default lainnya
             
-            matriks_normalisasi[alt_id]['nilai'][k['id_kriteria']] = nilai_normalisasi
-            matriks_normalisasi[alt_id]['total'] += nilai_normalisasi * k['bobot']
+            matriks_normalisasi[alt_id]['nilai'][k['id_kriteria']] = nilai_ternormalisasi
+            total_nilai_tertimbang += nilai_ternormalisasi * k['bobot']
+        
+        matriks_normalisasi[alt_id]['total'] = total_nilai_tertimbang
+        hasil_saw.append((alt_id, matriks_normalisasi[alt_id]))
     
     # Urutkan berdasarkan total nilai tertinggi
-    hasil_saw = sorted(matriks_normalisasi.items(), key=lambda x: x[1]['total'], reverse=True)
+    hasil_saw = sorted(hasil_saw, key=lambda x: x[1]['total'], reverse=True)
     
     return kriteria, alternatif, hasil_saw
 
@@ -323,24 +339,125 @@ def perhitungan():
     if 'loggedin' not in session:
         return redirect(url_for('login'))
     
-    kriteria, alternatif, hasil_saw = hitung_saw()
+    kriteria_list, alternatif_list, hasil_perhitungan = hitung_saw()
+    
+    # Hitung max dan min untuk normalisasi
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT id_kriteria, atribut FROM kriteria")
+    kriteria_data = cursor.fetchall()
+    
+    max_values = {}
+    min_values = {}
+    
+    for k in kriteria_data:
+        cursor.execute("SELECT MAX(nilai) as max_val, MIN(nilai) as min_val FROM nilai_alternatif WHERE id_kriteria = %s", (k['id_kriteria'],))
+        result = cursor.fetchone()
+        if result:
+            max_values[k['id_kriteria']] = result['max_val'] or 0
+            min_values[k['id_kriteria']] = result['min_val'] if result and result['min_val'] is not None else float('inf')
+
+    # Ambil nilai_dict untuk Matriks Keputusan dan Normalisasi Matriks
+    cursor.execute("SELECT id_alternatif, id_kriteria, nilai FROM nilai_alternatif")
+    nilai_data = cursor.fetchall()
+
+    nilai_dict = {}
+    for n in nilai_data:
+        if n['id_alternatif'] not in nilai_dict:
+            nilai_dict[n['id_alternatif']] = {}
+        nilai_dict[n['id_alternatif']][n['id_kriteria']] = n['nilai']
     
     return render_template('perhitungan.html', 
-                         kriteria=kriteria, 
-                         alternatif=alternatif, 
-                         hasil_saw=hasil_saw)
+                         kriteria_list=kriteria_list, 
+                         alternatif_list=alternatif_list, 
+                         hasil_perhitungan=hasil_perhitungan,
+                         max_values=max_values,
+                         min_values=min_values,
+                         nilai_dict=nilai_dict)
 
-@app.route('/laporan')
+@app.route('/laporan', methods=['GET', 'POST'])
 def laporan():
     if 'loggedin' not in session:
         return redirect(url_for('login'))
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
-    kriteria, alternatif, hasil_saw = hitung_saw()
-    
+    if request.method == 'POST':
+        judul = request.form['judul']
+        deskripsi = request.form['deskripsi']
+        # Asumsikan Anda ingin menyimpan hasil perhitungan saat laporan dibuat
+        kriteria, alternatif, hasil_saw = hitung_saw() # Hitung SAW saat membuat laporan
+        # Di sini Anda perlu menyimpan hasil_saw atau ringkasannya ke tabel laporan
+        # Untuk contoh ini, kita hanya menyimpan judul dan deskripsi
+        cursor.execute("INSERT INTO laporan (judul, deskripsi) VALUES (%s, %s)", (judul, deskripsi))
+        mysql.connection.commit()
+        flash('Laporan berhasil dibuat!', 'success')
+        return redirect(url_for('laporan'))
+
+    # Tampilkan daftar laporan yang sudah ada
+    cursor.execute("SELECT * FROM laporan ORDER BY tanggal DESC")
+    laporan_list = cursor.fetchall()
+
     return render_template('laporan.html', 
-                         kriteria=kriteria, 
-                         alternatif=alternatif, 
-                         hasil_saw=hasil_saw)
+                           laporan_list=laporan_list)
+
+@app.route('/laporan/cetak/<int:id>') # Tambahkan route untuk cetak laporan spesifik
+def cetak_laporan(id):
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT * FROM laporan WHERE id = %s", (id,))
+    laporan_data = cursor.fetchone()
+
+    if not laporan_data:
+        flash('Laporan tidak ditemukan!', 'danger')
+        return redirect(url_for('laporan'))
+
+    # Untuk mencetak laporan, Anda mungkin perlu mengambil kembali hasil SAW yang relevan atau
+    # jika hasil SAW disimpan di tabel laporan, ambil dari sana.
+    # Untuk contoh sederhana, kita akan hitung ulang SAW (ini mungkin tidak efisien untuk data besar)
+    kriteria, alternatif, hasil_saw = hitung_saw()
+
+    return render_template('cetak_laporan.html', 
+                           laporan=laporan_data,
+                           kriteria=kriteria,
+                           alternatif=alternatif,
+                           hasil_saw=hasil_saw)
+
+@app.route('/laporan/edit/<int:id>', methods=['GET', 'POST'])
+def edit_laporan(id):
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    if request.method == 'POST':
+        judul = request.form['judul']
+        deskripsi = request.form['deskripsi']
+        cursor.execute("UPDATE laporan SET judul = %s, deskripsi = %s WHERE id = %s", (judul, deskripsi, id))
+        mysql.connection.commit()
+        flash('Laporan berhasil diupdate!', 'success')
+        return redirect(url_for('laporan'))
+
+    cursor.execute("SELECT * FROM laporan WHERE id = %s", (id,))
+    laporan_data = cursor.fetchone()
+
+    if not laporan_data:
+        flash('Laporan tidak ditemukan!', 'danger')
+        return redirect(url_for('laporan'))
+
+    return render_template('edit_laporan.html', laporan=laporan_data)
+
+@app.route('/laporan/delete/<int:id>', methods=['POST'])
+def delete_laporan(id):
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("DELETE FROM laporan WHERE id = %s", (id,))
+    mysql.connection.commit()
+    flash('Laporan berhasil dihapus!', 'success')
+    return redirect(url_for('laporan'))
 
 @app.route('/users', methods=['GET', 'POST'])
 def users():

@@ -26,14 +26,14 @@
                     {% for kriteria in kriteria_list %}
                     <tr>
                         <td>{{ loop.index }}</td>
-                        <td>{{ kriteria.nama }}</td>
-                        <td>{{ kriteria.bobot }}</td>
-                        <td>{{ kriteria.jenis }}</td>
+                        <td>{{ kriteria['nama_kriteria'] }}</td>
+                        <td>{{ kriteria['bobot'] }}</td>
+                        <td>{{ kriteria['atribut'] }}</td>
                         <td>
-                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editKriteriaModal{{ kriteria.id }}">
+                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editKriteriaModal{{ kriteria['id_kriteria'] }}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#hapusKriteriaModal{{ kriteria.id }}">
+                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#hapusKriteriaModal{{ kriteria['id_kriteria'] }}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
@@ -53,28 +53,38 @@
                 <h5 class="modal-title">Tambah Kriteria</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{{ url_for('kriteria') }}" method="POST">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="nama" class="form-label">Nama Kriteria</label>
-                        <input type="text" class="form-control" id="nama" name="nama" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="bobot" class="form-label">Bobot</label>
-                        <input type="number" class="form-control" id="bobot" name="bobot" step="0.01" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="jenis" class="form-label">Jenis</label>
-                        <select class="form-select" id="jenis" name="jenis" required>
-                            <option value="benefit">Benefit</option>
-                            <option value="cost">Cost</option>
-                        </select>
-                    </div>
+            <form method="POST" action="/kriteria">
+                <div class="mb-3">
+                    <label class="form-label">Nama Kriteria</label>
+                    <input type="text" class="form-control" name="nama" value="Pendapatan Bulanan" required>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
+
+                <div class="mb-3">
+                    <label class="form-label">Atribut</label>
+                    <select class="form-select" name="atribut" required>
+                        <option value="cost" selected>Cost</option>
+                        <option value="benefit">Benefit</option>
+                    </select>
                 </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Bobot (Total harus 1.0)</label>
+                    <input type="number" class="form-control" name="bobot" value="0.35" min="0" max="1" step="0.01" required>
+                    <small class="text-muted">Nilai antara 0-1 (Contoh: 0.35 untuk 35%)</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Skala Penilaian</label>
+                    <textarea class="form-control" name="skala" rows="3">
+1. >Rp3.000.000
+2. Rp2.000.000-Rp3.000.000
+3. Rp1.500.000-Rp2.000.000
+4. Rp500.000-Rp1.500.000
+5. <Rp500.000
+                    </textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Simpan</button>
             </form>
         </div>
     </div>
@@ -83,28 +93,28 @@
 <!-- Modal Edit dan Hapus untuk setiap kriteria -->
 {% for kriteria in kriteria_list %}
 <!-- Modal Edit -->
-<div class="modal fade" id="editKriteriaModal{{ kriteria.id }}" tabindex="-1">
+<div class="modal fade" id="editKriteriaModal{{ kriteria['id_kriteria'] }}" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Edit Kriteria</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{{ url_for('edit_kriteria', id=kriteria.id) }}" method="POST">
+            <form action="{{ url_for('edit_kriteria', id=kriteria['id_kriteria']) }}" method="POST">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="nama{{ kriteria.id }}" class="form-label">Nama Kriteria</label>
-                        <input type="text" class="form-control" id="nama{{ kriteria.id }}" name="nama" value="{{ kriteria.nama }}" required>
+                        <label for="nama{{ kriteria['id_kriteria'] }}" class="form-label">Nama Kriteria</label>
+                        <input type="text" class="form-control" id="nama{{ kriteria['id_kriteria'] }}" name="nama" value="{{ kriteria['nama_kriteria'] }}" required>
                     </div>
                     <div class="mb-3">
-                        <label for="bobot{{ kriteria.id }}" class="form-label">Bobot</label>
-                        <input type="number" class="form-control" id="bobot{{ kriteria.id }}" name="bobot" step="0.01" value="{{ kriteria.bobot }}" required>
+                        <label for="bobot{{ kriteria['id_kriteria'] }}" class="form-label">Bobot</label>
+                        <input type="number" class="form-control" id="bobot{{ kriteria['id_kriteria'] }}" name="bobot" step="0.01" value="{{ kriteria['bobot'] }}" required>
                     </div>
                     <div class="mb-3">
-                        <label for="jenis{{ kriteria.id }}" class="form-label">Jenis</label>
-                        <select class="form-select" id="jenis{{ kriteria.id }}" name="jenis" required>
-                            <option value="benefit" {% if kriteria.jenis == 'benefit' %}selected{% endif %}>Benefit</option>
-                            <option value="cost" {% if kriteria.jenis == 'cost' %}selected{% endif %}>Cost</option>
+                        <label for="jenis{{ kriteria['id_kriteria'] }}" class="form-label">Jenis</label>
+                        <select class="form-select" id="jenis{{ kriteria['id_kriteria'] }}" name="jenis" required>
+                            <option value="benefit" {% if kriteria['atribut'] == 'benefit' %}selected{% endif %}>Benefit</option>
+                            <option value="cost" {% if kriteria['atribut'] == 'cost' %}selected{% endif %}>Cost</option>
                         </select>
                     </div>
                 </div>
@@ -118,7 +128,7 @@
 </div>
 
 <!-- Modal Hapus -->
-<div class="modal fade" id="hapusKriteriaModal{{ kriteria.id }}" tabindex="-1">
+<div class="modal fade" id="hapusKriteriaModal{{ kriteria['id_kriteria'] }}" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -126,11 +136,11 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>Apakah Anda yakin ingin menghapus kriteria "{{ kriteria.nama }}"?</p>
+                <p>Apakah Anda yakin ingin menghapus kriteria "{{ kriteria['nama_kriteria'] }}"?</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <form action="{{ url_for('hapus_kriteria', id=kriteria.id) }}" method="POST" class="d-inline">
+                <form action="{{ url_for('delete_kriteria', id=kriteria['id_kriteria']) }}" method="POST" class="d-inline">
                     <button type="submit" class="btn btn-danger">Hapus</button>
                 </form>
             </div>

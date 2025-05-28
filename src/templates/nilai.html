@@ -18,7 +18,7 @@
                         <th>No</th>
                         <th>Nama Alternatif</th>
                         {% for kriteria in kriteria_list %}
-                        <th>{{ kriteria.nama }}</th>
+                        <th>{{ kriteria['nama_kriteria'] }}</th>
                         {% endfor %}
                         <th>Aksi</th>
                     </tr>
@@ -27,15 +27,15 @@
                     {% for alternatif in alternatif_list %}
                     <tr>
                         <td>{{ loop.index }}</td>
-                        <td>{{ alternatif.nama }}</td>
+                        <td>{{ alternatif['nama_kepala_keluarga'] }}</td>
                         {% for kriteria in kriteria_list %}
                         <td>
-                            {% set nilai = nilai_dict.get((alternatif.id, kriteria.id)) %}
-                            {{ nilai.nilai if nilai else '-' }}
+                            {% set nilai = nilai_dict.get((alternatif['id_alternatif'], kriteria['id_kriteria'])) %}
+                            {{ nilai if nilai is not none else '-' }}
                         </td>
                         {% endfor %}
                         <td>
-                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editNilaiModal{{ alternatif.id }}">
+                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editNilaiModal{{ alternatif['id_alternatif'] }}">
                                 <i class="bi bi-pencil"></i>
                             </button>
                         </td>
@@ -62,14 +62,14 @@
                         <select class="form-select" id="alternatif" name="alternatif_id" required>
                             <option value="">Pilih Alternatif</option>
                             {% for alt in alternatif_list %}
-                            <option value="{{ alt.id }}">{{ alt.nama }}</option>
+                            <option value="{{ alt['id_alternatif'] }}">{{ alt['nama_kepala_keluarga'] }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     {% for kriteria in kriteria_list %}
                     <div class="mb-3">
-                        <label for="nilai{{ kriteria.id }}" class="form-label">{{ kriteria.nama }}</label>
-                        <input type="number" class="form-control" id="nilai{{ kriteria.id }}" name="nilai_{{ kriteria.id }}" step="0.01" required>
+                        <label for="nilai{{ kriteria['id_kriteria'] }}" class="form-label">{{ kriteria['nama_kriteria'] }}</label>
+                        <input type="number" class="form-control" id="nilai{{ kriteria['id_kriteria'] }}" name="nilai_{{ kriteria['id_kriteria'] }}" step="0.01" required>
                     </div>
                     {% endfor %}
                 </div>
@@ -84,21 +84,21 @@
 
 <!-- Modal Edit Nilai untuk setiap alternatif -->
 {% for alternatif in alternatif_list %}
-<div class="modal fade" id="editNilaiModal{{ alternatif.id }}" tabindex="-1">
+<div class="modal fade" id="editNilaiModal{{ alternatif['id_alternatif'] }}" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit Nilai - {{ alternatif.nama }}</h5>
+                <h5 class="modal-title">Edit Nilai - {{ alternatif['nama_kepala_keluarga'] }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{{ url_for('edit_nilai', alternatif_id=alternatif.id) }}" method="POST">
+            <form action="{{ url_for('edit_nilai', alternatif_id=alternatif['id_alternatif']) }}" method="POST">
                 <div class="modal-body">
                     {% for kriteria in kriteria_list %}
                     <div class="mb-3">
-                        <label for="nilai{{ alternatif.id }}_{{ kriteria.id }}" class="form-label">{{ kriteria.nama }}</label>
-                        {% set nilai = nilai_dict.get((alternatif.id, kriteria.id)) %}
-                        <input type="number" class="form-control" id="nilai{{ alternatif.id }}_{{ kriteria.id }}" 
-                               name="nilai_{{ kriteria.id }}" step="0.01" value="{{ nilai.nilai if nilai else '' }}" required>
+                        <label for="nilai{{ alternatif['id_alternatif'] }}_{{ kriteria['id_kriteria'] }}" class="form-label">{{ kriteria['nama_kriteria'] }}</label>
+                        {% set nilai = nilai_dict.get((alternatif['id_alternatif'], kriteria['id_kriteria'])) %}
+                        <input type="number" class="form-control" id="nilai{{ alternatif['id_alternatif'] }}_{{ kriteria['id_kriteria'] }}" 
+                               name="nilai_{{ kriteria['id_kriteria'] }}" step="0.01" value="{{ nilai if nilai is not none else '' }}" required>
                     </div>
                     {% endfor %}
                 </div>
