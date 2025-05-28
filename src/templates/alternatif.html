@@ -25,7 +25,7 @@
                 <tbody>
                     {% for alternatif in alternatif_list %}
                     <tr>
-                        <td>{{ loop.index }}</td>
+                        <td>{{ loop.index + (page - 1) * per_page }}</td>
                         <td>{{ alternatif['no_kk'] }}</td>
                         <td>{{ alternatif['nama_kepala_keluarga'] }}</td>
                         <td>{{ alternatif['alamat'] }}</td>
@@ -38,10 +38,35 @@
                             </button>
                         </td>
                     </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center">Tidak ada data alternatif.</td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+
+        <!-- Navigasi Paginasi -->
+        <nav>
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('alternatif', page=page-1, q=search_query) }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if page == p %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('alternatif', page=p, q=search_query) }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('alternatif', page=page+1, q=search_query) }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
     </div>
 </div>
 

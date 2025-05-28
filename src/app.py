@@ -192,7 +192,7 @@ def kriteria():
     cursor.execute("SELECT SUM(bobot) as total FROM kriteria")
     total_bobot = cursor.fetchone()['total'] or 0
     
-    return render_template('kriteria.html', kriteria=data, total_bobot=total_bobot)
+    return render_template('kriteria.html', kriteria_list=data, total_bobot=total_bobot)
 
 @app.route('/kriteria/edit/<int:id>', methods=['GET', 'POST'])
 def edit_kriteria(id):
@@ -246,10 +246,49 @@ def alternatif():
         flash('Alternatif berhasil ditambahkan!', 'success')
         return redirect(url_for('alternatif'))
     
-    cursor.execute("SELECT * FROM alternatif")
+    # Logika untuk menampilkan data dengan pencarian dan paginasi
+    search_query = request.args.get('q')
+    page = request.args.get('page', 1, type=int)
+    per_page = 10 # Jumlah item per halaman
+    
+    # Query dasar
+    query = "SELECT * FROM alternatif"
+    count_query = "SELECT COUNT(*) as total FROM alternatif"
+    query_params = []
+    count_params = []
+
+    # Tambahkan kondisi pencarian jika ada query
+    if search_query:
+        query += " WHERE no_kk LIKE %s OR nama_kepala_keluarga LIKE %s OR alamat LIKE %s"
+        count_query += " WHERE no_kk LIKE %s OR nama_kepala_keluarga LIKE %s OR alamat LIKE %s"
+        # Tambahkan % di awal dan akhir search_query untuk pencarian 'mengandung'
+        search_pattern = f"%{search_query}%"
+        query_params.extend([search_pattern, search_pattern, search_pattern])
+        count_params.extend([search_pattern, search_pattern, search_pattern])
+    
+    # Tambahkan paginasi
+    offset = (page - 1) * per_page
+    query += f" LIMIT %s OFFSET %s"
+    query_params.extend([per_page, offset])
+
+    # Eksekusi query data alternatif
+    cursor.execute(query, query_params)
     data = cursor.fetchall()
     
-    return render_template('alternatif.html', alternatif_list=data)
+    # Eksekusi query total data (untuk paginasi)
+    cursor.execute(count_query, count_params)
+    total_alternatif = cursor.fetchone()['total']
+
+    # Hitung total halaman
+    total_pages = math.ceil(total_alternatif / per_page)
+
+    return render_template('alternatif.html', 
+                         alternatif_list=data,
+                         total_alternatif=total_alternatif,
+                         page=page,
+                         per_page=per_page,
+                         total_pages=total_pages,
+                         search_query=search_query)
 
 @app.route('/alternatif/edit/<int:id>', methods=['GET', 'POST'])
 def edit_alternatif(id):
