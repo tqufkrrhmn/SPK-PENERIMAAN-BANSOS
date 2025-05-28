@@ -23,12 +23,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for kriteria in kriteria_list %}
+                    {% for kriteria_list in kriteria %}
                     <tr>
                         <td>{{ loop.index }}</td>
-                        <td>{{ kriteria['nama_kriteria'] }}</td>
-                        <td>{{ kriteria['bobot'] }}</td>
-                        <td>{{ kriteria['atribut'] }}</td>
+                        <td>{{ kriteria_list['nama_kriteria'] }}</td>
+                        <td>{{ kriteria_list['atribut'] }}</td>
+                        <td>{{ kriteria_list['bobot'] }}</td>
                         <td>
                             <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editKriteriaModal{{ kriteria['id_kriteria'] }}">
                                 <i class="bi bi-pencil"></i>
