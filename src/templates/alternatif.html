@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Alternatif{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Daftar Alternatif</h5>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tambahAlternatifModal">
+            <i class="bi bi-plus-circle"></i> Tambah Alternatif
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>NIK</th>
+                        <th>Nama</th>
+                        <th>Alamat</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alternatif in alternatif_list %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ alternatif['no_kk'] }}</td>
+                        <td>{{ alternatif['nama_kepala_keluarga'] }}</td>
+                        <td>{{ alternatif['alamat'] }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editAlternatifModal{{ alternatif['id_alternatif'] }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#hapusAlternatifModal{{ alternatif['id_alternatif'] }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Alternatif -->
+<div class="modal fade" id="tambahAlternatifModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tambah Alternatif</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('alternatif') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nik" class="form-label">NIK</label>
+                        <input type="text" class="form-control" id="nik" name="no_kk" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nama" class="form-label">Nama</label>
+                        <input type="text" class="form-control" id="nama" name="nama" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="alamat" class="form-label">Alamat</label>
+                        <textarea class="form-control" id="alamat" name="alamat" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit dan Hapus untuk setiap alternatif -->
+{% for alternatif in alternatif_list %}
+<!-- Modal Edit -->
+<div class="modal fade" id="editAlternatifModal{{ alternatif['id_alternatif'] }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Alternatif - {{ alternatif['nama_kepala_keluarga'] }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('edit_alternatif', id=alternatif['id_alternatif']) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nik{{ alternatif['id_alternatif'] }}" class="form-label">NIK</label>
+                        <input type="text" class="form-control" id="nik{{ alternatif['id_alternatif'] }}" name="no_kk" value="{{ alternatif['no_kk'] }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nama{{ alternatif['id_alternatif'] }}" class="form-label">Nama</label>
+                        <input type="text" class="form-control" id="nama{{ alternatif['id_alternatif'] }}" name="nama" value="{{ alternatif['nama_kepala_keluarga'] }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="alamat{{ alternatif['id_alternatif'] }}" class="form-label">Alamat</label>
+                        <textarea class="form-control" id="alamat{{ alternatif['id_alternatif'] }}" name="alamat" rows="3" required>{{ alternatif['alamat'] }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Hapus -->
+<div class="modal fade" id="hapusAlternatifModal{{ alternatif['id_alternatif'] }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Hapus Alternatif</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus alternatif "{{ alternatif['nama_kepala_keluarga'] }}"?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <form action="{{ url_for('delete_alternatif', id=alternatif['id_alternatif']) }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Hapus</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %} 

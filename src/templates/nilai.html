@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Nilai Alternatif{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Nilai Alternatif</h5>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tambahNilaiModal">
+            <i class="bi bi-plus-circle"></i> Tambah Nilai
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama Alternatif</th>
+                        {% for kriteria in kriteria_list %}
+                        <th>{{ kriteria.nama }}</th>
+                        {% endfor %}
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alternatif in alternatif_list %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ alternatif.nama }}</td>
+                        {% for kriteria in kriteria_list %}
+                        <td>
+                            {% set nilai = nilai_dict.get((alternatif.id, kriteria.id)) %}
+                            {{ nilai.nilai if nilai else '-' }}
+                        </td>
+                        {% endfor %}
+                        <td>
+                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editNilaiModal{{ alternatif.id }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Nilai -->
+<div class="modal fade" id="tambahNilaiModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tambah Nilai</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('nilai') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="alternatif" class="form-label">Alternatif</label>
+                        <select class="form-select" id="alternatif" name="alternatif_id" required>
+                            <option value="">Pilih Alternatif</option>
+                            {% for alt in alternatif_list %}
+                            <option value="{{ alt.id }}">{{ alt.nama }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% for kriteria in kriteria_list %}
+                    <div class="mb-3">
+                        <label for="nilai{{ kriteria.id }}" class="form-label">{{ kriteria.nama }}</label>
+                        <input type="number" class="form-control" id="nilai{{ kriteria.id }}" name="nilai_{{ kriteria.id }}" step="0.01" required>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Nilai untuk setiap alternatif -->
+{% for alternatif in alternatif_list %}
+<div class="modal fade" id="editNilaiModal{{ alternatif.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Nilai - {{ alternatif.nama }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('edit_nilai', alternatif_id=alternatif.id) }}" method="POST">
+                <div class="modal-body">
+                    {% for kriteria in kriteria_list %}
+                    <div class="mb-3">
+                        <label for="nilai{{ alternatif.id }}_{{ kriteria.id }}" class="form-label">{{ kriteria.nama }}</label>
+                        {% set nilai = nilai_dict.get((alternatif.id, kriteria.id)) %}
+                        <input type="number" class="form-control" id="nilai{{ alternatif.id }}_{{ kriteria.id }}" 
+                               name="nilai_{{ kriteria.id }}" step="0.01" value="{{ nilai.nilai if nilai else '' }}" required>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %} 

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Perhitungan SAW{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Matriks Keputusan</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Alternatif</th>
+                        {% for kriteria in kriteria_list %}
+                        <th>{{ kriteria.nama }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alternatif in alternatif_list %}
+                    <tr>
+                        <td>{{ alternatif.nama }}</td>
+                        {% for kriteria in kriteria_list %}
+                        <td>
+                            {% set nilai = nilai_dict.get((alternatif.id, kriteria.id)) %}
+                            {{ nilai.nilai if nilai else '-' }}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Normalisasi Matriks</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Alternatif</th>
+                        {% for kriteria in kriteria_list %}
+                        <th>{{ kriteria.nama }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alternatif in alternatif_list %}
+                    <tr>
+                        <td>{{ alternatif.nama }}</td>
+                        {% for kriteria in kriteria_list %}
+                        <td>
+                            {% set nilai = nilai_dict.get((alternatif.id, kriteria.id)) %}
+                            {% if nilai %}
+                                {% if kriteria.jenis == 'benefit' %}
+                                    {{ "%.4f"|format(nilai.nilai / max_values[kriteria.id]) }}
+                                {% else %}
+                                    {{ "%.4f"|format(min_values[kriteria.id] / nilai.nilai) }}
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Hasil Perhitungan</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Peringkat</th>
+                        <th>Nama</th>
+                        <th>Nilai Akhir</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hasil in hasil_perhitungan %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ hasil.nama }}</td>
+                        <td>{{ "%.4f"|format(hasil.nilai) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="text-end">
+    <a href="{{ url_for('laporan') }}" class="btn btn-primary" target="_blank">
+        <i class="bi bi-printer"></i> Cetak Laporan
+    </a>
+</div>
+{% endblock %} 
