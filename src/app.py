@@ -332,7 +332,7 @@ def nilai():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
     if request.method == 'POST':
-        alternatif_id = request.form['alternatif']
+        alternatif_id = request.form['alternatif_id']
         
         # Hapus nilai lama jika ada
         cursor.execute("DELETE FROM nilai_alternatif WHERE id_alternatif = %s", (alternatif_id,))
@@ -534,3 +534,92 @@ def delete_user(id):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+@app.route("/nilai", methods=["GET", "POST"])
+def nilai():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    
+    if request.method == "POST":
+        id_alternatif = request.form.get("id_alternatif")
+        if id_alternatif:
+            nilai_kriteria = {}
+            for i in range(1, 6):
+                nilai_kriteria[i] = request.form.get(f'kriteria_{i}')
+
+            # Hitung nilai cost otomatis untuk kriteria 3 (kondisi tempat tinggal)
+            try:
+                luas = float(nilai_kriteria[3])
+                tanggungan = int(nilai_kriteria[2])
+                nilai_kriteria[3] = luas / (tanggungan + 1)
+            except:
+                nilai_kriteria[3] = 0
+
+            for id_kriteria, nilai in nilai_kriteria.items():
+                cursor.execute("REPLACE INTO nilai (id_alternatif, id_kriteria, nilai) VALUES (?, ?, ?)",
+                            (id_alternatif, id_kriteria, float(nilai)))
+            conn.commit()
+        return redirect(url_for("nilai"))
+    
+
+    # Method GET - tampilkan data
+    cursor.execute("SELECT * FROM alternatif")
+    alternatif_list = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM kriteria")
+    kriteria_list = cursor.fetchall()
+
+    # Ambil data nilai untuk ditampilkan di tabel
+    cursor.execute("""
+        SELECT a.id_alternatif, a.nama_kepala_keluarga, k.nama_kriteria, n.nilai 
+        FROM alternatif a
+        LEFT JOIN nilai_alternatif n ON a.id_alternatif = n.id_alternatif
+        LEFT JOIN kriteria k ON n.id_kriteria = k.id_kriteria
+    """)
+    nilai_data = cursor.fetchall()
+
+    return render_template("nilai.html", alternatif_list=alternatif_list, kriteria_list=kriteria_list, nilai_data=nilai_data)
+
+
+
+@app.route("/perhitungan", methods=["GET", "POST"])
+def perhitungan():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    hasil_saw = hitung_saw()
+
+    if request.method == "POST":
+        # Simpan hasil ke laporan
+        tanggal = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        for row in hasil_saw["ranking"]:
+            cursor.execute("INSERT INTO laporan (id_alternatif, nilai_akhir, tanggal) VALUES (%s, %s, %s)",
+                           (row["id_alternatif"], row["nilai_akhir"], tanggal))
+        mysql.connection.commit()
+        flash("Laporan berhasil disimpan.")
+        return redirect(url_for("laporan"))
+
+    return render_template("perhitungan.html", hasil=hasil_saw)
+
+@app.route("/laporan")
+def laporan():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("""
+        SELECT l.*, a.nama_kepala_keluarga, a.no_kk, a.alamat 
+        FROM laporan l
+        JOIN alternatif a ON l.id_alternatif = a.id_alternatif
+        ORDER BY l.tanggal DESC, l.nilai_akhir DESC
+    """)
+    data = cursor.fetchall()
+    return render_template("laporan.html", laporan=data)
+
+@app.route("/cetak_laporan")
+def cetak_laporan():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("""
+        SELECT l.*, a.nama_kepala_keluarga, a.no_kk, a.alamat 
+        FROM laporan l
+        JOIN alternatif a ON l.id_alternatif = a.id_alternatif
+        ORDER BY l.tanggal DESC, l.nilai_akhir DESC
+    """)
+    data = cursor.fetchall()
+    return render_template("cetak_laporan.html", laporan=data)

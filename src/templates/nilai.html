@@ -48,38 +48,67 @@
 </div>
 
 <!-- Modal Tambah Nilai -->
-<div class="modal fade" id="tambahNilaiModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Tambah Nilai</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{{ url_for('nilai') }}" method="POST">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="alternatif" class="form-label">Alternatif</label>
-                        <select class="form-select" id="alternatif" name="alternatif_id" required>
-                            <option value="">Pilih Alternatif</option>
-                            {% for alt in alternatif_list %}
-                            <option value="{{ alt['id_alternatif'] }}">{{ alt['nama_kepala_keluarga'] }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    {% for kriteria in kriteria_list %}
-                    <div class="mb-3">
-                        <label for="nilai{{ kriteria['id_kriteria'] }}" class="form-label">{{ kriteria['nama_kriteria'] }}</label>
-                        <input type="number" class="form-control" id="nilai{{ kriteria['id_kriteria'] }}" name="nilai_{{ kriteria['id_kriteria'] }}" step="0.01" required>
-                    </div>
-                    {% endfor %}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
-                </div>
-            </form>
+<div class="modal fade" id="tambahNilaiModal" tabindex="-1" aria-labelledby="tambahNilaiModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('nilai') }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tambahNilaiModalLabel">Input Nilai Alternatif</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
         </div>
+        <div class="modal-body">
+          <!-- Pilihan Alternatif -->
+          <div class="mb-3">
+            <label for="alternatif_id" class="form-label">Nama Kepala Keluarga</label>
+            <select class="form-select" name="alternatif_id" id="alternatif_id" required>
+              <option value="">-- Pilih --</option>
+              {% for alternatif in alternatif_list %}
+              <option value="{{ alternatif.id_alternatif }}">{{ alternatif.nama_kepala_keluarga }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <!-- Pendapatan Bulanan -->
+          <div class="mb-3">
+            <label for="pendapatan" class="form-label">Pendapatan Bulanan (&lt; Rp1.500.000)</label>
+            <input type="number" class="form-control" name="pendapatan" id="pendapatan" min="0" required>
+          </div>
+          <!-- Jumlah Tanggungan -->
+          <div class="mb-3">
+            <label for="tanggungan" class="form-label">Jumlah Tanggungan (≥3 orang)</label>
+            <input type="number" class="form-control" name="tanggungan" id="tanggungan" min="0" required>
+          </div>
+          <!-- Luas Bangunan -->
+          <div class="mb-3">
+            <label for="luas_bangunan" class="form-label">Luas Bangunan (m²)</label>
+            <input type="number" class="form-control" name="luas_bangunan" id="luas_bangunan" min="1" required>
+          </div>
+          <!-- Jumlah Penghuni -->
+          <div class="mb-3">
+            <label for="jumlah_penghuni" class="form-label">Jumlah Penghuni (Tanggungan + 1)</label>
+            <input type="number" class="form-control" name="jumlah_penghuni" id="jumlah_penghuni" min="1" required>
+          </div>
+          <!-- Kepemilikan Aset (motor) -->
+          <div class="mb-3">
+            <label for="aset_motor" class="form-label">Kepemilikan Aset (motor ≤1 unit)</label>
+            <input type="number" class="form-control" name="aset_motor" id="aset_motor" min="0" max="10" required>
+          </div>
+          <!-- Status Pekerjaan -->
+          <div class="mb-3">
+            <label for="status_pekerjaan" class="form-label">Status Pekerjaan</label>
+            <select class="form-select" name="status_pekerjaan" id="status_pekerjaan" required>
+              <option value="0">Tetap</option>
+              <option value="1">Tidak Tetap</option>
+              <option value="2">Pengangguran</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Nilai</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
   
 
@@ -92,7 +121,7 @@
                 <h5 class="modal-title">Edit Nilai - {{ alternatif['nama_kepala_keluarga'] }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{{ url_for('edit_nilai', **{'alternatif_id': alternatif['id_alternatif']}) }}" method="POST">
+            <form action="{{ url_for('nilai') }}" method="POST">
                 <div class="modal-body">
                     {% for kriteria in kriteria_list %}
                     <div class="mb-3">
@@ -112,4 +141,4 @@
     </div>
 </div>
 {% endfor %}
-{% endblock %} 
+{% endblock %}
